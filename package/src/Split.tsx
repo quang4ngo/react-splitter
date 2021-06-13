@@ -90,7 +90,7 @@ export type SplitProps = {
   onMeasuredSizesChanged?: (sizes: SplitMeasuredSizes) => void;
 };
 
-export const Split = (props: React.PropsWithChildren<SplitProps>): JSX.Element => {
+export const Split = React.forwardRef<React.PropsWithChildren<SplitProps>>((props, ref) => {
   const {
     horizontal = false,
     initialPrimarySize = '50%',
@@ -99,6 +99,7 @@ export const Split = (props: React.PropsWithChildren<SplitProps>): JSX.Element =
     splitterSize = '7px',
     renderSplitter,
     resetOnDoubleClick = false,
+    resetPercent = undefined,
     defaultSplitterColors = {
       color: 'silver',
       hover: 'gray',
@@ -156,6 +157,34 @@ export const Split = (props: React.PropsWithChildren<SplitProps>): JSX.Element =
     }
   }, [horizontal, currentContentSize, currentPrimarySize, currentSplitterSize]);
 
+  React.useImperativeHandle(ref, () => ({
+    hidePrimary() {
+      setPercent(0);
+    },
+
+    hideSecondary() {
+      setPercent(100);
+    },
+
+    ensurePrimaryVisible(minPercent = 5, newPercent = 50) {
+      if (!percent || percent < minPercent) {
+        setPercent(newPercent);
+      }
+    },
+
+    ensureSecondaryVisible(maxPercent = 95, newPercent = 50) {
+      if (!percent || percent > maxPercent) {
+        setPercent(newPercent);
+      }
+    },
+
+    setPercent(percent) {
+      if (percent >= 0 && percent <= 100) {
+        setPercent(percent)
+      }
+    }
+  }));
+
   const onMeasureContent = (contentRect: ContentRect) => {
     contentRect.bounds &&
       setContentMeasuredDimensions({ height: contentRect.bounds.height, width: contentRect.bounds.width });
@@ -194,7 +223,7 @@ export const Split = (props: React.PropsWithChildren<SplitProps>): JSX.Element =
   };
 
   const onSplitDoubleClick = () => {
-    resetOnDoubleClick && setPercent(undefined);
+    resetOnDoubleClick && setPercent(resetPercent);
   };
 
   const children = React.Children.toArray(props.children);
@@ -272,4 +301,4 @@ export const Split = (props: React.PropsWithChildren<SplitProps>): JSX.Element =
       )}
     </Measure>
   );
-};
+});
